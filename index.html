@@ -7,7 +7,7 @@
   <title>Deepwoken Go | Registration Panel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@600;800&family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: dark;
@@ -101,7 +101,33 @@
     td:first-child { border-left: 1px solid rgba(94,242,214,.12); border-radius: 14px 0 0 14px; color: #fff; font-weight: 700; }
     td:last-child { border-right: 1px solid rgba(94,242,214,.12); border-radius: 0 14px 14px 0; }
     .review-text { max-width: 280px; color: #cbd5e1; font-style: italic; overflow-wrap: anywhere; }
+    .vip-row { background: linear-gradient(100deg, rgba(50,8,19,.96), rgba(20,10,20,.94) 58%, rgba(53,9,23,.96)); }
+    .vip-row td { border-top-color: rgba(251,113,133,.48); border-bottom-color: rgba(251,113,133,.48); }
+    .vip-row td:first-child { border-left-color: rgba(251,113,133,.65); }
+    .vip-row td:last-child { border-right-color: rgba(251,113,133,.65); }
+    .vip-name-cell { min-width: 145px; text-align: center; }
+    .crow-crest { position: relative; display: flex; justify-content: center; align-items: center; width: max-content; margin: 0 auto .2rem; color: #fff2c2; font-size: 1.6rem; line-height: 1; filter: drop-shadow(0 0 7px rgba(255,226,145,.85)); animation: crowGlow 2.4s ease-in-out infinite; }
+    .crow-crest::before, .crow-crest::after { position: absolute; top: 2px; color: #fff8dd; font-size: .6rem; content: '✦'; animation: crowSpark 1.8s ease-in-out infinite; }
+    .crow-crest::before { left: -11px; }
+    .crow-crest::after { right: -11px; animation-delay: .8s; }
+    .vip-name { display: block; color: #fff1f2; font: 900 1rem 'Cinzel Decorative', 'Cinzel', serif; letter-spacing: .04em; text-shadow: 0 0 13px rgba(251,113,133,.65); }
+    @keyframes crowGlow { 0%,100% { filter: drop-shadow(0 0 5px rgba(255,226,145,.55)); transform: translateY(0); } 50% { filter: drop-shadow(0 0 13px rgba(255,241,190,1)); transform: translateY(-2px); } }
+    @keyframes crowSpark { 0%,100% { opacity: .45; transform: scale(.7) rotate(0); } 50% { opacity: 1; transform: scale(1.25) rotate(22deg); } }
+    .vip-review-cell { min-width: 330px; }
+    .vip-review-bar { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: .65rem; overflow: hidden; width: fit-content; max-width: 100%; padding: .65rem .85rem; border: 1px solid rgba(251,113,133,.72); border-radius: 14px; background: linear-gradient(115deg, rgba(127,20,42,.94), rgba(67,13,29,.98) 56%, rgba(151,25,47,.9)); box-shadow: 0 0 18px rgba(225,29,72,.22), inset 0 1px rgba(255,255,255,.12); }
+    .vip-review-bar::before { position: absolute; inset: -30% auto -30% -45%; width: 30%; background: linear-gradient(90deg, transparent, rgba(255,235,238,.28), transparent); content: ''; transform: skewX(-22deg); animation: vipBarShine 4s ease-in-out infinite; pointer-events: none; }
+    .vip-review-bar .review-text { position: relative; z-index: 1; color: #fff1f2; font: 600 .92rem 'Cinzel', serif; }
+    .vip-review-label { position: relative; z-index: 1; flex: 0 0 auto; padding: .28rem .48rem; border: 1px solid rgba(255,210,144,.52); border-radius: 999px; background: rgba(255,224,174,.1); color: #ffe1b2; font: 600 .62rem 'JetBrains Mono', monospace; letter-spacing: .025em; white-space: nowrap; }
+    @keyframes vipBarShine { 0%,55% { left: -45%; } 100% { left: 125%; } }
     .privacy-note { margin: .85rem 0 0; color: var(--text-muted); font-size: .78rem; line-height: 1.5; }
+    .location-fallback { position: relative; margin-top: 1rem; padding: 1rem; border: 1px solid rgba(252,211,77,.38); border-radius: 16px; background: rgba(252,211,77,.07); }
+    .location-fallback p { margin: 0; color: #f1e8c6; font-size: .84rem; line-height: 1.55; }
+    .location-help { position: relative; margin-top: .75rem; color: #f1e8c6; font-size: .8rem; line-height: 1.55; }
+    .location-help summary { width: fit-content; color: #fde68a; cursor: pointer; }
+    .location-help ul { display: grid; gap: .45rem; margin: .55rem 0 0; padding-left: 1.15rem; }
+    .location-actions { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: .85rem; }
+    .location-actions .bubble-btn, .location-actions .btn-ghost { flex: 1 1 220px; }
+    .location-actions .btn-ghost { color: var(--text-main); }
     .admin-form { display: grid; gap: .85rem; margin-top: 1rem; }
     .admin-state { color: var(--text-muted); font-size: .86rem; }
     .admin-state[hidden], .admin-form[hidden], .admin-logout[hidden] { display: none; }
@@ -130,7 +156,7 @@
     @keyframes charRise { to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
     .kinetic-sub { margin-top: 1rem; color: var(--holo-cyan); font: clamp(.9rem, 2vw, 1.15rem) 'JetBrains Mono', monospace; letter-spacing: .18em; text-transform: uppercase; opacity: 0; transform: translateY(12px); animation: subFade .6s var(--smooth) .7s forwards; }
     @keyframes subFade { to { opacity: 1; transform: translateY(0); } }
-    @media (max-width: 760px) { .container { width: min(100% - 1.25rem, 620px); padding-top: 6.5rem; } .form-grid { grid-template-columns: 1fr; } .form-grid .bubble-btn { width: 100%; } .holo-card { padding: 1.2rem; } .table-wrap { margin: 0 -.2rem; } }
+    @media (max-width: 760px) { .container { width: min(100% - 1.25rem, 620px); padding-top: 6.5rem; } .form-grid { grid-template-columns: 1fr; } .form-grid .bubble-btn { width: 100%; } .holo-card { padding: 1.2rem; } .table-wrap { margin: 0 -.2rem; } .vip-review-cell { min-width: 290px; } }
     @media (max-width: 520px) { .diamond-dock { top: 17px; right: 20px; gap: 17px; } .diamond-btn { width: 38px; height: 38px; } .header { margin-bottom: 1.5rem; } .crest-pill { font-size: .65rem; } .board-header { align-items: flex-start; flex-direction: column; } th, td { padding: .75rem .7rem; } .modal-box { padding: 1.5rem; } }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
   </style>
@@ -169,11 +195,26 @@
           <input class="holo-input" id="reviewInput" name="review" type="text" maxlength="240" placeholder="Write your review" required>
           <button class="bubble-btn" id="registerBtn" type="submit">Attune &amp; Register</button>
         </div>
-        <p class="privacy-note">When you click Attune &amp; Register, your browser will ask to share your location. Your username and review appear on the public leaderboard; your coordinates are stored privately and can be seen only by admins.</p>
+        <p class="privacy-note">When you click Attune &amp; Register, your browser will ask to share your location. Your username and review appear on the public leaderboard; coordinates are private. If your device cannot find its location, you can choose a less accurate estimate from your internet connection instead.</p>
       </form>
       <div class="status-bar" aria-live="polite" aria-atomic="true">
         <span id="statusText">Awaiting resonance signature...</span>
         <div class="mode-indicators" id="modeIndicators"></div>
+      </div>
+      <div class="location-fallback" id="locationFallback" hidden>
+        <p>Your browser or device is not sharing its location. If no permission prompt appeared, allow Location for this site in browser settings and turn on system Location Services. You can retry or explicitly use an approximate internet-based estimate, which may be inaccurate on VPNs and mobile networks.</p>
+        <details class="location-help">
+          <summary>Where to allow location</summary>
+          <ul>
+            <li>Safari on iPhone or iPad: Settings → Privacy &amp; Security → Location Services → Safari Websites. Reopen this page after allowing access.</li>
+            <li>Safari on Mac: System Settings → Privacy &amp; Security → Location Services → Safari.</li>
+            <li>Chrome on Windows: open this site’s controls beside the address bar → Site settings → Location → Allow. Also enable Location services in Windows Settings → Privacy &amp; security → Location.</li>
+          </ul>
+        </details>
+        <div class="location-actions">
+          <button class="btn-ghost" id="retryLocationBtn" type="button">Retry device location</button>
+          <button class="bubble-btn" id="networkLocationBtn" type="button">Use approximate location</button>
+        </div>
       </div>
     </section>
 

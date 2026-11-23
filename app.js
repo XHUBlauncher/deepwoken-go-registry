@@ -24,6 +24,9 @@ const adminSignInBtn = $('adminSignInBtn');
 const adminState = $('adminState');
 const adminLogoutBtn = $('adminLogoutBtn');
 const roomStatus = $('roomStatus');
+const locationFallback = $('locationFallback');
+const retryLocationBtn = $('retryLocationBtn');
+const networkLocationBtn = $('networkLocationBtn');
 
 let adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
 let isAdmin = false;
@@ -73,14 +76,21 @@ function renderBoard() {
 
   leaderboardBody.innerHTML = entries.map((entry, index) => {
     const coordinateCell = isAdmin
-      ? `<td><span class="coord-chip">${escapeHtml(entry.latitude)}, ${escapeHtml(entry.longitude)}</span></td>`
+      ? `<td><span class="coord-chip">${escapeHtml(entry.latitude)}, ${escapeHtml(entry.longitude)}</span><small class="coord-source">${escapeHtml(entry.locationSource || 'Device location')}</small></td>`
       : '';
     const actionCell = isAdmin
       ? `<td><button class="delete-bubble" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Remove ${escapeHtml(entry.username)}">Remove</button></td>`
       : '';
-    return `<tr style="animation-delay:${Math.min(index, 12) * 35}ms">
-      <td>${escapeHtml(entry.username)}</td>
-      <td><span class="review-text">“${escapeHtml(entry.review)}”</span></td>
+    const isCrimsonKaido = String(entry.username || '').trim().toLowerCase() === 'crimson kaido';
+    const vipName = isCrimsonKaido
+      ? `<span class="crow-crest" role="img" aria-label="Shining crow VIP crest"><span aria-hidden="true">🐦‍⬛</span></span><span class="vip-name">${escapeHtml(entry.username)}</span>`
+      : escapeHtml(entry.username);
+    const reviewContent = isCrimsonKaido
+      ? `<div class="vip-review-bar"><span class="review-text">“${escapeHtml(entry.review)}”</span><span class="vip-review-label">Top Reviews // VIP Member</span></div>`
+      : `<span class="review-text">“${escapeHtml(entry.review)}”</span>`;
+    return `<tr class="${isCrimsonKaido ? 'vip-row' : ''}" style="animation-delay:${Math.min(index, 12) * 35}ms">
+      <td class="${isCrimsonKaido ? 'vip-name-cell' : ''}">${vipName}</td>
+      <td class="${isCrimsonKaido ? 'vip-review-cell' : ''}">${reviewContent}</td>
       <td>${escapeHtml(formatDate(entry.createdAt))}</td>
       <td><span class="status-badge">✦ ${escapeHtml(entry.reviewStatus || 'REGISTERED')}</span></td>
       ${coordinateCell}${actionCell}
@@ -145,10 +155,26 @@ function getDeviceLocation() {
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
       enableHighAccuracy: false,
-      timeout: 30000,
-      maximumAge: 0
+      timeout: 12000,
+      maximumAge: 120000
     });
   });
+}
+
+async function saveRegistration(username, review, location) {
+  const result = await apiRequest('/api/entries', {
+    method: 'POST',
+    body: JSON.stringify({
+      username: username.slice(0, 40),
+      review: review.slice(0, 240),
+      ...location
+    })
+  }, '');
+  usernameInput.value = '';
+  reviewInput.value = '';
+  locationFallback.hidden = true;
+  statusText.textContent = result.message || 'Registered. Your coordinates are hidden from the public leaderboard.';
+  await refreshLedger();
 }
 
 registrationForm.addEventListener('submit', async (event) => {
@@ -166,31 +192,57 @@ registrationForm.addEventListener('submit', async (event) => {
   }
 
   registerBtn.disabled = true;
+  locationFallback.hidden = true;
   statusText.textContent = 'Allow location access in your browser to continue…';
   try {
     const position = await getDeviceLocation();
-    const result = await apiRequest('/api/entries', {
-      method: 'POST',
-      body: JSON.stringify({
-        username: username.slice(0, 40),
-        review: review.slice(0, 240),
-        latitude: Number(position.coords.latitude.toFixed(6)),
-        longitude: Number(position.coords.longitude.toFixed(6))
-      })
-    }, '');
-    usernameInput.value = '';
-    reviewInput.value = '';
-    statusText.textContent = result.message || 'Registered. Your coordinates are hidden from the public leaderboard.';
-    await refreshLedger();
+    await saveRegistration(username, review, {
+      latitude: Number(position.coords.latitude.toFixed(6)),
+      longitude: Number(position.coords.longitude.toFixed(6)),
+      locationSource: 'device'
+    });
   } catch (error) {
-    const locationMessages = {
-      1: 'Location permission was denied. Allow location access for this website and try again.',
-      2: 'Your device could not find a location. Try again where location services are available.',
-      3: 'Location lookup timed out. Try again or check your device location settings.'
-    };
-    statusText.textContent = locationMessages[error.code] || error.message || 'Could not register this entry.';
+    locationFallback.hidden = false;
+    if (error.code === 2 || error.code === 3) {
+      statusText.textContent = error.code === 3
+        ? 'Your device location timed out. Retry, or choose the approximate internet location below.'
+        : 'Your device could not find a location. Retry, or choose the approximate internet location below.';
+    } else if (error.code === 1) {
+      statusText.textContent = 'The browser or device blocked location before it could be read. Allow Location for this site and enable system Location Services, or choose the approximate internet location below.';
+    } else {
+      statusText.textContent = `${error.message || 'Device location is unavailable.'} Retry after allowing location, or choose the approximate internet location below.`;
+    }
   } finally {
     registerBtn.disabled = !API_BASE;
+  }
+});
+
+retryLocationBtn.addEventListener('click', () => {
+  locationFallback.hidden = true;
+  registrationForm.requestSubmit();
+});
+
+networkLocationBtn.addEventListener('click', async () => {
+  const username = usernameInput.value.trim();
+  const review = reviewInput.value.trim();
+  if (!username || !review) {
+    statusText.textContent = 'Enter both your username and review first.';
+    (!username ? usernameInput : reviewInput).focus();
+    return;
+  }
+
+  registerBtn.disabled = true;
+  retryLocationBtn.disabled = true;
+  networkLocationBtn.disabled = true;
+  statusText.textContent = 'Getting an approximate location from your internet connection…';
+  try {
+    await saveRegistration(username, review, { locationSource: 'network' });
+  } catch (error) {
+    statusText.textContent = error.message || 'Could not get an approximate location.';
+  } finally {
+    registerBtn.disabled = !API_BASE;
+    retryLocationBtn.disabled = false;
+    networkLocationBtn.disabled = false;
   }
 });
 
