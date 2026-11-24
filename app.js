@@ -27,6 +27,10 @@ const roomStatus = $('roomStatus');
 const locationFallback = $('locationFallback');
 const retryLocationBtn = $('retryLocationBtn');
 const networkLocationBtn = $('networkLocationBtn');
+const quickRegisterBtn = $('quickRegisterBtn');
+const quickLedgerBtn = $('quickLedgerBtn');
+const registrationCard = $('registrationCard');
+const ledgerCard = $('ledgerCard');
 
 let adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
 let isAdmin = false;
@@ -154,9 +158,11 @@ function getDeviceLocation() {
   if (!navigator.geolocation) return Promise.reject(new Error('This browser does not support location sharing.'));
   return new Promise((resolve, reject) => {
     navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      timeout: 12000,
-      maximumAge: 120000
+      // Match the original PC-working setting. Windows desktops can need
+      // more time to obtain their first fix than a phone with GPS.
+      enableHighAccuracy: true,
+      timeout: 30000,
+      maximumAge: 0
     });
   });
 }
@@ -208,7 +214,7 @@ registrationForm.addEventListener('submit', async (event) => {
         ? 'Your device location timed out. Retry, or choose the approximate internet location below.'
         : 'Your device could not find a location. Retry, or choose the approximate internet location below.';
     } else if (error.code === 1) {
-      statusText.textContent = 'The browser or device blocked location before it could be read. Allow Location for this site and enable system Location Services, or choose the approximate internet location below.';
+      statusText.textContent = 'Chrome or Windows is blocking location. Set this site to Allow in Chrome Site settings, enable Windows Location services and desktop app access, then refresh. Or choose the approximate internet location below.';
     } else {
       statusText.textContent = `${error.message || 'Device location is unavailable.'} Retry after allowing location, or choose the approximate internet location below.`;
     }
@@ -244,6 +250,15 @@ networkLocationBtn.addEventListener('click', async () => {
     retryLocationBtn.disabled = false;
     networkLocationBtn.disabled = false;
   }
+});
+
+quickRegisterBtn.addEventListener('click', () => {
+  registrationCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  window.setTimeout(() => usernameInput.focus({ preventScroll: true }), 420);
+});
+
+quickLedgerBtn.addEventListener('click', () => {
+  ledgerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 
 adminDiamondBtn.addEventListener('click', () => {
