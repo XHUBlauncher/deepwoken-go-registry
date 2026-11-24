@@ -80,10 +80,10 @@ function renderBoard() {
 
   leaderboardBody.innerHTML = entries.map((entry, index) => {
     const coordinateCell = isAdmin
-      ? `<td><span class="coord-chip">${escapeHtml(entry.latitude)}, ${escapeHtml(entry.longitude)}</span><small class="coord-source">${escapeHtml(entry.locationSource || 'Device location')}</small></td>`
+      ? `<td data-label="Coordinates"><span class="coord-chip">${escapeHtml(entry.latitude)}, ${escapeHtml(entry.longitude)}</span><small class="coord-source">${escapeHtml(entry.locationSource || 'Device location')}</small></td>`
       : '';
     const actionCell = isAdmin
-      ? `<td><button class="delete-bubble" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Remove ${escapeHtml(entry.username)}">Remove</button></td>`
+      ? `<td data-label="Admin"><button class="delete-bubble" type="button" data-delete-entry="${escapeHtml(entry.id)}" aria-label="Remove ${escapeHtml(entry.username)}">Remove</button></td>`
       : '';
     const isCrimsonKaido = String(entry.username || '').trim().toLowerCase() === 'crimson kaido';
     const vipName = isCrimsonKaido
@@ -93,10 +93,10 @@ function renderBoard() {
       ? `<div class="vip-review-bar"><span class="review-text">“${escapeHtml(entry.review)}”</span><span class="vip-review-label">Top Reviews // VIP Member</span></div>`
       : `<span class="review-text">“${escapeHtml(entry.review)}”</span>`;
     return `<tr class="${isCrimsonKaido ? 'vip-row' : ''}" style="animation-delay:${Math.min(index, 12) * 35}ms">
-      <td class="${isCrimsonKaido ? 'vip-name-cell' : ''}">${vipName}</td>
-      <td class="${isCrimsonKaido ? 'vip-review-cell' : ''}">${reviewContent}</td>
-      <td>${escapeHtml(formatDate(entry.createdAt))}</td>
-      <td><span class="status-badge">✦ ${escapeHtml(entry.reviewStatus || 'REGISTERED')}</span></td>
+      <td data-label="Username" class="${isCrimsonKaido ? 'vip-name-cell' : ''}">${vipName}</td>
+      <td data-label="Review" class="${isCrimsonKaido ? 'vip-review-cell' : ''}">${reviewContent}</td>
+      <td data-label="Date">${escapeHtml(formatDate(entry.createdAt))}</td>
+      <td data-label="Review status"><span class="status-badge">✦ ${escapeHtml(entry.reviewStatus || 'REGISTERED')}</span></td>
       ${coordinateCell}${actionCell}
     </tr>`;
   }).join('');
